@@ -29,19 +29,47 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen>
     with SingleTickerProviderStateMixin {
-  final List<Map<String, String>> mots = [
-    {"mot": "BONJOU", "endis": "Se yon mo ki itilize pou salye moun"},
-    {"mot": "LEKOL", "endis": "Se kote yo bay edikasyon"},
-    {"mot": "LAPLI", "endis": "Li tonbe nan syèl lè tan an pa bon"},
-    {"mot": "AYITI", "endis": "Se yon peyi nan Karayib la"},
-  ];
+  final List<Map<String, String>> words = [
+  {"mot": "MANMAN", "endis": "Se fanm ki bay lavi"},
+  {"mot": "PAPA", "endis": "Se gason ki gen pitit"},
+  {"mot": "DLO", "endis": "Nou bwè li pou viv"},
+  {"mot": "PYE", "endis": "Li ede nou mache"},
+  {"mot": "MEN", "endis": "Nou itilize li pou kenbe bagay"},
+  {"mot": "LALIN", "endis": "Li klere lannwit"},
+  {"mot": "ZANMI", "endis": "Se moun ou renmen anpil"},
+  {"mot": "KAY", "endis": "Se kote ou rete"},
+  {"mot": "MACHE", "endis": "Se kote yo vann pwodwi"},
+  {"mot": "LEGIM", "endis": "Manje ki soti nan tè"},
+  {"mot": "DIRI", "endis": "Manje prensipal anpil Ayisyen"},
+  {"mot": "LIV", "endis": "Ou li li pou aprann"},
+  {"mot": "LEKOL", "endis": "Se kote yo bay edikasyon"},
+  {"mot": "AYITI", "endis": "Se yon peyi nan Karayib la"},
+  {"mot": "KREYOL", "endis": "Lang nou pale an Ayiti"},
+  {"mot": "LAKAY", "endis": "Yon lòt fason pou di kay"},
+  {"mot": "CHEN", "endis": "Bèt ki konn veye kay"},
+  {"mot": "CHAT", "endis": "Bèt ki renmen chase sourit"},
+  {"mot": "PWASON", "endis": "Li viv nan dlo"},
+  {"mot": "MONT", "endis": "Li montre lè"},
+  {"mot": "RAD", "endis": "Ou mete li sou kò ou"},
+  {"mot": "LARI", "endis": "Machin pase ladan li"},
+  {"mot": "PON", "endis": "Li ede travèse dlo"},
+  {"mot": "MIZIK", "endis": "Ou tande li pou pran plezi"},
+  {"mot": "DANSE", "endis": "Ou fè li sou mizik"},
+  {"mot": "SANTE", "endis": "Lè ou pa malad"},
+  {"mot": "LOPITAL", "endis": "Yo mennen moun malad la"},
+  {"mot": "MEDSEN", "endis": "Li trete moun malad"},
+  {"mot": "JADEN", "endis": "Kote yo plante flè ak legim"},
+  {"mot": "MANGO", "endis": "Fwi dous anpil nan sezon cho"},
+  {"mot": "BANNANN", "endis": "Fwi jòn ki long"},
+];
 
-  late String motCache;
-  late String endis;
-  int chances = 5;
 
-  List<String> lettresTrouvees = [];
-  List<String> lettresUtilisees = [];
+  late String hiddenWord;
+  late String index;
+  int tries = 5;
+
+  List<String> foundLetters = [];
+  List<String> usedLetters = [];
 
   late AnimationController _controller;
   late Animation<double> _animation;
@@ -63,64 +91,64 @@ class _GameScreenState extends State<GameScreen>
 
   void _initialiserJeu() {
     final random = Random();
-    final selected = mots[random.nextInt(mots.length)];
-    motCache = selected["mot"]!;
-    endis = selected["endis"]!;
-    chances = 5;
-    lettresTrouvees.clear();
-    lettresUtilisees.clear();
+    final selected = words[random.nextInt(words.length)];
+    hiddenWord = selected["mot"]!;
+    index = selected["endis"]!;
+    tries = 5;
+    foundLetters.clear();
+    usedLetters.clear();
   }
 
-  String afficherMot() {
-    return motCache.split('').map((lettre) {
-      return lettresTrouvees.contains(lettre) ? lettre : '*';
+  String displayWord() {
+    return hiddenWord.split('').map((letter) {
+      return foundLetters.contains(letter) ? letter : '*';
     }).join(' ');
   }
 
-  void onLettreCliquee(String lettre) {
-    if (lettresUtilisees.contains(lettre)) return;
+  void onClickKeyboard(String letter) {
+    if (usedLetters.contains(letter)) return;
 
     setState(() {
-      lettresUtilisees.add(lettre);
+      usedLetters.add(letter);
 
-      if (motCache.contains(lettre)) {
-        lettresTrouvees.add(lettre);
+      if (hiddenWord.contains(letter)) {
+        foundLetters.add(letter);
         _controller.forward(from: 0);
       } else {
-        chances--;
+        tries--;
       }
 
-      if (!afficherMot().contains('*')) {
-        allerResultat(true);
-      } else if (chances == 0) {
-        allerResultat(false);
+      if (!displayWord().contains('*')) {
+        goToResult(true);
+      } else if (tries == 0) {
+        goToResult(false);
       }
     });
   }
 
-  void allerResultat(bool gagne) {
+  void goToResult(bool win) {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (_) => ResultScreen(
-          gagne: gagne,
-          motCache: motCache,
+          win: win,
+          hiddenWord: hiddenWord,
         ),
       ),
     );
   }
 
-  Color couleurBouton(String lettre) {
-    if (lettresTrouvees.contains(lettre)) return Colors.green;
-    if (lettresUtilisees.contains(lettre)) return Colors.grey;
+  Color couleurBouton(String letter) {
+    if (foundLetters.contains(letter)) return Colors.green;
+    if (usedLetters.contains(letter)) return Colors.grey;
     return const Color.fromARGB(255, 7, 23, 241);
   }
 
-  Widget _buildRow(List<String> lettres) {
+  Widget _buildRow(List<String> letters) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
-      children: lettres.map((lettre) {
-        final dejaUtilisee = lettresUtilisees.contains(lettre);
+      children: letters.map((letter) {
+        final dejaUtilisee = usedLetters.contains(letter);
 
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 3),
@@ -129,15 +157,15 @@ class _GameScreenState extends State<GameScreen>
             height: 48,
             child: ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: couleurBouton(lettre),
+                backgroundColor: couleurBouton(letter),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(10),
                 ),
               ),
               onPressed:
-                  dejaUtilisee ? null : () => onLettreCliquee(lettre),
+                  dejaUtilisee ? null : () => onClickKeyboard(letter),
               child: Text(
-                lettre,
+                letter,
                 style: const TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -159,7 +187,7 @@ class _GameScreenState extends State<GameScreen>
         actions: [
           Padding(
             padding: const EdgeInsets.all(12),
-            child: Center(child: Text("Chans: $chances")),
+            child: Center(child: Text("Chans: $tries")),
           ),
         ],
       ),
@@ -171,7 +199,7 @@ class _GameScreenState extends State<GameScreen>
             ScaleTransition(
               scale: _animation,
               child: Text(
-                afficherMot(),
+                displayWord(),
                 style: const TextStyle(
                   fontSize: 36,
                   letterSpacing: 3,
@@ -182,7 +210,7 @@ class _GameScreenState extends State<GameScreen>
             ),
             const SizedBox(height: 14),
             Text(
-              endis,
+              index,
               style: const TextStyle(
                 fontSize: 18,
                 fontStyle: FontStyle.italic,
@@ -212,13 +240,13 @@ class _GameScreenState extends State<GameScreen>
 
 // ===================== Result Screen =====================
 class ResultScreen extends StatelessWidget {
-  final bool gagne;
-  final String motCache;
+  final bool win;
+  final String hiddenWord;
 
   const ResultScreen({
     super.key,
-    required this.gagne,
-    required this.motCache,
+    required this.win,
+    required this.hiddenWord,
   });
 
   @override
@@ -240,20 +268,20 @@ class ResultScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Text(
-                gagne ? "🎉 Ou Genyen !" : "😢 Ou Pèdi !",
+                win ? "Weeeeee ! Ou Genyen !" : "Wouch ! Ou Pèdi !",
                 style: const TextStyle(
                   fontSize: 36,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
               ),
-              if (!gagne) ...[
+              if (!win) ...[
                 const SizedBox(height: 10),
                 Text(
-                  "Mo a te: $motCache",
+                  "Mo a te: $hiddenWord",
                   style: const TextStyle(
                     fontSize: 24,
-                    color: Colors.yellowAccent,
+                    color: Colors.white70,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
